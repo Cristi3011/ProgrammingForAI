@@ -5,7 +5,3 @@ pydantic>=2.7
 [dev]
 pytest>=8.0
 httpx>=0.27
-
-[eval]
-pandas
-matplotlib
