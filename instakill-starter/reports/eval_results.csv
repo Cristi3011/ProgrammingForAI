@@ -1,0 +1,5 @@
+user_id,strategy,ndcg_at_10,n_relevant,user_group
+4,chronological,0.693426,2,new
+4,for_you,0.543771,2,new
+4,learned,0.817530,2,new
+4,popularity,0.580279,2,new

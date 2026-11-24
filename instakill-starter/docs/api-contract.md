@@ -53,7 +53,7 @@ Query parameters:
 |---|---:|---:|---|
 | `user_id` | Yes | — | Integer ID of an existing user |
 | `limit` | No | `20` | Integer from 1 through 50 |
-| `strategy` | No | `for_you` | `for_you` or `chronological` |
+| `strategy` | No | `for_you` | `for_you`, `chronological`, or `learned` |
 
 ## 2. Successful Response
 

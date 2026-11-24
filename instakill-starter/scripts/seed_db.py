@@ -1,4 +1,6 @@
 """Seeds the InstaKill database with users, posts, follows, and likes."""
+from datetime import datetime, timedelta, timezone
+
 from app.db.database import get_connection, init_db
 
 USERS = ["alice", "bob", "carol", "dave", "erin"]
@@ -42,6 +44,26 @@ LIKES = [
     ("dave", "does anyone else think the feed is chronological only? boring"),
     ("erin", "Working on a recommender system with a simple ranking formula"),
     ("erin", "Small improvements make a big difference in performance"),
+    ("alice", "Trying a fresh approach to software design"),
+    ("alice", "Exploring machine learning ideas with my study group"),
+    ("alice", "Weekend plans: coffee, books, and a little coding"),
+    ("alice", "Working on a recommender system with a simple ranking formula"),
+    ("bob", "does anyone else think the feed is chronological only? boring"),
+    ("bob", "benchmarking my ranker against popularity baseline today"),
+    ("bob", "red-team week is going to be brutal, good luck everyone"),
+    ("bob", "Sharing notes about reliable database migrations"),
+    ("carol", "hello world, this is my first post"),
+    ("carol", "benchmarking my ranker against popularity baseline today"),
+    ("carol", "A new day for testing my backend project"),
+    ("carol", "Small improvements make a big difference in performance"),
+    ("dave", "I am learning Python and building an API this week"),
+    ("dave", "Trying a fresh approach to software design"),
+    ("dave", "Exploring machine learning ideas with my study group"),
+    ("dave", "What is everyone building for the course project?"),
+    ("erin", "hello world, this is my first post"),
+    ("erin", "just shipped a cosine similarity search, feels great"),
+    ("erin", "Trying a fresh approach to software design"),
+    ("erin", "red-team week is going to be brutal, good luck everyone"),
 ]
 
 
@@ -56,7 +78,7 @@ def seed() -> None:
             row["username"]: int(row["id"])
             for row in conn.execute("SELECT id, username FROM user")
         }
-        for username, content in POSTS:
+        for index, (username, content) in enumerate(POSTS):
             user_id = user_ids[username]
             exists = conn.execute(
                 "SELECT 1 FROM post WHERE user_id = ? AND content = ?",
@@ -64,8 +86,29 @@ def seed() -> None:
             ).fetchone()
             if exists is None:
                 conn.execute(
-                    "INSERT INTO post (user_id, content) VALUES (?, ?)",
-                    (user_id, content),
+                    "INSERT INTO post (user_id, content, created_at) "
+                    "VALUES (?, ?, ?)",
+                    (
+                        user_id,
+                        content,
+                        (
+                            datetime(2026, 8, 1, tzinfo=timezone.utc)
+                            + timedelta(days=index * 3)
+                        ).isoformat(),
+                    ),
+                )
+            else:
+                conn.execute(
+                    "UPDATE post SET created_at = ? "
+                    "WHERE user_id = ? AND content = ?",
+                    (
+                        (
+                            datetime(2026, 8, 1, tzinfo=timezone.utc)
+                            + timedelta(days=index * 3)
+                        ).isoformat(),
+                        user_id,
+                        content,
+                    ),
                 )
         post_ids = {
             row["content"]: int(row["id"])
@@ -76,10 +119,20 @@ def seed() -> None:
                 "INSERT OR IGNORE INTO follow (follower_id, followed_id) VALUES (?, ?)",
                 (user_ids[follower], user_ids[followed]),
             )
-        for liker, content in LIKES:
+        for index, (liker, content) in enumerate(LIKES):
+            liked_at = (
+                datetime(2026, 9, 1, tzinfo=timezone.utc)
+                + timedelta(days=(index % 30))
+            ).isoformat()
             conn.execute(
-                'INSERT OR IGNORE INTO "like" (user_id, post_id) VALUES (?, ?)',
-                (user_ids[liker], post_ids[content]),
+                'INSERT OR IGNORE INTO "like" '
+                "(user_id, post_id, created_at) VALUES (?, ?, ?)",
+                (user_ids[liker], post_ids[content], liked_at),
+            )
+            conn.execute(
+                'UPDATE "like" SET created_at = ? '
+                "WHERE user_id = ? AND post_id = ?",
+                (liked_at, user_ids[liker], post_ids[content]),
             )
         conn.commit()
     print(
